@@ -34,6 +34,15 @@ let _items = []
 
 watchAuth(onAuthed, onUnauthed)
 setupNetworkBanner()
+document.querySelector('#sign-in-btn')?.addEventListener('click', async () => {
+  try {
+    await signIn()
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+      alert('Sign-in failed: ' + (err.message || err.code))
+    }
+  }
+})
 
 async function onAuthed(user, household) {
   _currentUser = user
@@ -48,7 +57,6 @@ async function onAuthed(user, household) {
 function onUnauthed() {
   teardownApp()
   showScreen('auth-screen')
-  document.querySelector('#sign-in-btn')?.addEventListener('click', () => signIn(), { once: true })
 }
 
 // ── App init ──────────────────────────────────────────────────────────────────
