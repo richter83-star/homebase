@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1117" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Homebase</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+
+<!-- Offline banner -->
+<div id="offline-banner">You're offline — changes will sync when reconnected</div>
+
+<!-- ── Auth Screen ─────────────────────────────────────────────────────────── -->
+<div id="auth-screen" class="screen active">
+  <h1>Homebase</h1>
+  <p>Shared shopping lists for your household. Real-time, simple, free.</p>
+  <button id="sign-in-btn">Sign in with Google</button>
+</div>
+
+<!-- ── Create / Join Screen ────────────────────────────────────────────────── -->
+<div id="join-screen" class="screen">
+  <h2>Welcome to Homebase</h2>
+
+  <div>
+    <h3>Create a household</h3>
+    <form id="create-household-form">
+      <div class="form-group">
+        <label for="household-name-input">Household name</label>
+        <input id="household-name-input" name="household-name" type="text" placeholder="e.g. The Martinez House" required />
+      </div>
+      <p id="create-error" class="error-msg"></p>
+      <button type="submit" class="btn">Create household</button>
+    </form>
+  </div>
+
+  <div class="divider">or</div>
+
+  <div>
+    <h3>Join with invite code</h3>
+    <form id="join-household-form">
+      <div class="form-group">
+        <label for="invite-code-input">6-character invite code</label>
+        <input id="invite-code-input" name="invite-code" type="text" placeholder="ABC123" maxlength="6" required autocomplete="off" style="text-transform:uppercase;letter-spacing:0.15em" />
+      </div>
+      <p id="join-error" class="error-msg"></p>
+      <button type="submit" class="btn btn-ghost">Join household</button>
+    </form>
+  </div>
+</div>
+
+<!-- ── App Screen ──────────────────────────────────────────────────────────── -->
+<div id="app-screen" class="screen">
+
+  <!-- Tab panels -->
+  <div class="tab-panels">
+
+    <!-- List tab -->
+    <div class="tab-panel active" data-tab="list">
+      <p class="panel-title">Shopping List</p>
+
+      <!-- Budget bar -->
+      <div id="budget-bar-wrap" style="display:none">
+        <div class="budget-bar-bg"><div id="budget-bar"></div></div>
+        <span id="budget-label"></span>
+      </div>
+
+      <!-- Add item form -->
+      <form id="add-item-form">
+        <div class="add-row">
+          <input name="name" type="text" placeholder="Add an item…" required autocomplete="off" />
+          <button type="submit" class="btn">Add</button>
+        </div>
+        <div class="add-extras">
+          <select name="cat">
+            <option value="grocery">🛒 Grocery</option>
+            <option value="cleaning">🧹 Cleaning</option>
+            <option value="personal">🧴 Personal</option>
+            <option value="other">📦 Other</option>
+          </select>
+          <input name="store" type="text" placeholder="Store (optional)" />
+          <input name="cost" type="number" placeholder="Cost" min="0" step="0.01" />
+        </div>
+      </form>
+
+      <!-- Filters -->
+      <div class="list-controls">
+        <select id="cat-filter">
+          <option value="all">All categories</option>
+          <option value="grocery">🛒 Grocery</option>
+          <option value="cleaning">🧹 Cleaning</option>
+          <option value="personal">🧴 Personal</option>
+          <option value="other">📦 Other</option>
+        </select>
+        <input id="search-input" type="text" placeholder="Search…" />
+        <label class="show-bought-wrap">
+          <input id="show-bought" type="checkbox" /> Show bought
+        </label>
+      </div>
+
+      <!-- Item list -->
+      <div id="item-list"></div>
+    </div>
+
+    <!-- Insights tab -->
+    <div class="tab-panel" data-tab="insights">
+      <p class="panel-title">Insights</p>
+
+      <div class="insights-section">
+        <h3>Spend by category</h3>
+        <div id="spend-by-cat"></div>
+      </div>
+
+      <div class="insights-section">
+        <h3>Top stores</h3>
+        <div id="top-stores"></div>
+      </div>
+
+      <div class="insights-section">
+        <h3>Expiring soon</h3>
+        <div id="runout-predictions"></div>
+      </div>
+    </div>
+
+    <!-- House tab -->
+    <div class="tab-panel" data-tab="house">
+      <p class="panel-title">Household</p>
+
+      <div class="house-section">
+        <h3>Name</h3>
+        <p id="house-name" style="font-size:1.1rem;font-weight:700"></p>
+      </div>
+
+      <div class="house-section">
+        <h3>Invite code</h3>
+        <div class="invite-code-display">
+          <span id="invite-code"></span>
+          <button id="copy-invite-code">Copy</button>
+        </div>
+        <button id="regen-invite-code" class="btn btn-ghost admin-only" style="font-size:0.85rem;margin-top:0.25rem">Regenerate code</button>
+      </div>
+
+      <div class="house-section">
+        <h3>Budget</h3>
+        <p class="budget-display">Monthly budget: <span id="budget-display">Not set</span></p>
+        <form id="budget-form" class="admin-only">
+          <div class="form-row">
+            <div class="form-group">
+              <input name="budget" type="number" placeholder="Set budget ($)" min="1" step="1" />
+            </div>
+            <button type="submit" class="btn" style="width:auto;padding:0.65rem 1rem;margin-top:1.4rem">Save</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="house-section">
+        <h3>Members</h3>
+        <div id="members-list"></div>
+      </div>
+
+      <div class="house-section admin-only">
+        <h3>Danger zone</h3>
+        <div class="admin-danger-zone">
+          <button id="reset-stores-btn" class="btn btn-ghost">Reset all stores</button>
+          <button id="reset-all-btn" class="btn btn-danger">Reset all data</button>
+        </div>
+      </div>
+
+      <div class="house-section" style="margin-top:2rem;display:flex;flex-direction:column;gap:0.5rem">
+        <button id="leave-household-btn" class="btn btn-ghost">Leave household</button>
+        <button id="sign-out-btn" class="btn btn-ghost">Sign out</button>
+      </div>
+    </div>
+
+  </div><!-- /tab-panels -->
+
+  <!-- Tab bar -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="list">
+      <span class="tab-icon">🛒</span>
+      List
+    </button>
+    <button class="tab-btn" data-tab="insights">
+      <span class="tab-icon">📊</span>
+      Insights
+    </button>
+    <button class="tab-btn" data-tab="house">
+      <span class="tab-icon">🏠</span>
+      House
+    </button>
+  </nav>
+
+</div><!-- /app-screen -->
+
+<!-- ── Edit Item Modal ─────────────────────────────────────────────────────── -->
+<div id="edit-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h3>Edit item</h3>
+      <button class="modal-close" id="edit-modal-close">✕</button>
+    </div>
+    <form id="edit-item-form">
+      <div class="form-group">
+        <label>Name</label>
+        <input name="name" type="text" required />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select name="cat">
+            <option value="grocery">🛒 Grocery</option>
+            <option value="cleaning">🧹 Cleaning</option>
+            <option value="personal">🧴 Personal</option>
+            <option value="other">📦 Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Qty</label>
+          <input name="qty" type="number" min="1" value="1" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Store</label>
+          <input name="store" type="text" placeholder="Optional" />
+        </div>
+        <div class="form-group">
+          <label>Cost ($)</label>
+          <input name="cost" type="number" min="0" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Optional notes…"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Expiry days</label>
+          <input name="expiryDays" type="number" min="1" placeholder="e.g. 7" />
+        </div>
+      </div>
+      <div class="recurring-wrap">
+        <input name="recurring" type="checkbox" id="edit-recurring" />
+        <label for="edit-recurring" style="color:var(--text)">Recurring item</label>
+      </div>
+      <div class="form-group">
+        <label>Restock every (days)</label>
+        <input name="freqDays" type="number" min="1" placeholder="e.g. 14" />
+      </div>
+      <button type="submit" class="btn">Save changes</button>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>
